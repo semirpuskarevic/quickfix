@@ -26,6 +26,7 @@
 #include "TimeRange.h"
 #include "Utility.h"
 
+#include <iostream>
 namespace FIX
 {
   TimeRange::TimeRange( const UtcTimeOnly& startTime,
@@ -153,6 +154,20 @@ namespace FIX
     }
   }
 
+  bool isInSessionRange(const DateTime& endTime, int endDay, const DateTime& creationDT, const DateTime& dateTime)
+  {
+      int daysUntilEnd = endDay - dateTime.getWeekDay();
+      daysUntilEnd = daysUntilEnd == 0 ? 7 : daysUntilEnd;
+      daysUntilEnd = daysUntilEnd < 0 ? 7 + daysUntilEnd : daysUntilEnd;
+
+      DateTime endDT(creationDT.getJulianDate() + daysUntilEnd, 0);
+      int h, m, s, ms;
+      endTime.getHMS(h, m, s, ms);
+      endDT.setHMS(h, m, s, ms);
+
+      return dateTime>=creationDT && dateTime<=endDT;
+  }
+
   bool TimeRange::isInSameRange( const DateTime& startTime,
                                  const DateTime& endTime,
                                  int startDay,
@@ -166,8 +181,8 @@ namespace FIX
     if( !isInRange( startTime, endTime, startDay, endDay, time2, time2.getWeekDay() ) )
       return false;
 
-    int absoluteDay1 = time1.getJulianDate() - time1.getWeekDay();
-    int absoluteDay2 = time2.getJulianDate() - time2.getWeekDay();
-    return absoluteDay1 == absoluteDay2;
+    if (time1 > time2)
+        return isInSessionRange(endTime, endDay, time2, time1);
+    return isInSessionRange(endTime, endDay, time1, time2);
   }
 }

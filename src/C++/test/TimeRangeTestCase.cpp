@@ -286,6 +286,13 @@ TEST(isInSameRangeWithDay)
   CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
   time2 = UtcTimeStamp(9, 1, 0, 4, 12, 2006);
   CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
+
+  time1 = UtcTimeStamp(8, 58, 59, 10, 12, 2006);
+  time2 = UtcTimeStamp(9, 1, 0, 3, 12, 2006);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
+
+  time1 = UtcTimeStamp(8, 59, 1, 10, 12, 2006);
+  CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
 }
 
 }
