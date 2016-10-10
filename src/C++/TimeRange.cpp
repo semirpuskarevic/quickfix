@@ -26,6 +26,8 @@
 #include "TimeRange.h"
 #include "Utility.h"
 
+#include <iostream>
+
 namespace FIX
 {
   TimeRange::TimeRange( const UtcTimeOnly& startTime,
@@ -161,10 +163,16 @@ namespace FIX
                                  const DateTime& time2 )
   {
     if( !isInRange( startTime, endTime, startDay, endDay, time1, time1.getWeekDay() ) )
-      return false;
+    {
+        std::cout << "First isInRange" << std::endl;
+        return false;
+    }
 
     if( !isInRange( startTime, endTime, startDay, endDay, time2, time2.getWeekDay() ) )
-      return false;
+    {
+        std::cout << "Second isInRange" << std::endl;
+        return false;
+    }
 
     int absoluteDay1 = time1.getJulianDate() - time1.getWeekDay();
     int absoluteDay2 = time2.getJulianDate() - time2.getWeekDay();
