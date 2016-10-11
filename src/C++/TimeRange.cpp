@@ -72,41 +72,42 @@ namespace FIX
       return( timeOnly >= start || timeOnly <= end );
   }
 
-  bool TimeRange::isInRange( const DateTime& startTime,
-                             const DateTime& endTime,
-                             int startDay,
-                             int endDay,
-                             const DateTime& time,
-                             int day )
-  {
-    UtcTimeOnly timeOnly (time);
 
-    if( startDay == endDay )
-    {
-      if( day != startDay )
-        return true;
-      return isInRange( startTime, endTime, time );
-    }
-    else if( startDay < endDay )
-    {
-      if( day < startDay || day > endDay )
-        return false;
-      else if( day == startDay && timeOnly < startTime )
-        return false;
-      else if( day == endDay && timeOnly > endTime )
-        return false;
-    }
-    else if( startDay > endDay )
-    {
-      if( day < startDay && day > endDay )
-        return false;
-      else if( day == startDay && timeOnly < startTime )
-        return false;
-      else if( day == endDay && timeOnly > endTime )
-        return false;
-    }
-    return true;
-  }
+  /* bool TimeRange::isInRange( const DateTime& startTime, */
+  /*                            const DateTime& endTime, */
+  /*                            int startDay, */
+  /*                            int endDay, */
+  /*                            const DateTime& time, */
+  /*                            int day ) */
+  /* { */
+  /*   UtcTimeOnly timeOnly (time); */
+
+  /*   if( startDay == endDay ) */
+  /*   { */
+  /*     if( day != startDay ) */
+  /*       return true; */
+  /*     return isInRange( startTime, endTime, time ); */
+  /*   } */
+  /*   else if( startDay < endDay ) */
+  /*   { */
+  /*     if( day < startDay || day > endDay ) */
+  /*       return false; */
+  /*     else if( day == startDay && timeOnly < startTime ) */
+  /*       return false; */
+  /*     else if( day == endDay && timeOnly > endTime ) */
+  /*       return false; */
+  /*   } */
+  /*   else if( startDay > endDay ) */
+  /*   { */
+  /*     if( day < startDay && day > endDay ) */
+  /*       return false; */
+  /*     else if( day == startDay && timeOnly < startTime ) */
+  /*       return false; */
+  /*     else if( day == endDay && timeOnly > endTime ) */
+  /*       return false; */
+  /*   } */
+  /*   return true; */
+  /* } */
 
   bool TimeRange::isInRange( const DateTime& startTime,
                              const DateTime& endTime,
@@ -117,39 +118,73 @@ namespace FIX
     return isInRange( startTime, endTime, startDay, endDay, time, time.getWeekDay() );
   }
 
+  void printDT(const DateTime& dt) {
+      std::cout<<dt.getYear()<<' '<<dt.getDay()<<' '<<dt.getMonth()<<' '<<dt.getHour()<<
+          ':'<<dt.getMinute()<<':'<<dt.getSecond()<<'.'<<dt.getMillisecond()<<std::endl;
+  }
+
   bool TimeRange::isInSameRange( const DateTime& start,
                                  const DateTime& end,
                                  const DateTime& time1,
                                  const DateTime& time2 )
   {
-    if( !isInRange( start, end, time1 ) ) return false;
-    if( !isInRange( start, end, time2 ) ) return false;
+    std::cout<<"4params - StartTime: ";
+    printDT(start);
+    std::cout<<"4params - EndTime: ";
+    printDT(end);
+    std::cout<<"4params - Time1: ";
+    printDT(time1);
+    std::cout<<"4params - Time2: ";
+    printDT(time2);
 
-    if( time1 == time2 ) return true;
+    if( !isInRange( start, end, time1 ) ) 
+    {
+        std::cout << "Time1 not in range" << std::endl;
+        return false;
+    }
+    if( !isInRange( start, end, time2 ) )
+    {
+        std::cout << "Time2 not in range" << std::endl;
+        return false;
+    }
+
+    if( time1 == time2 ) 
+    {
+        std::cout << "Time1 = Time2" << std::endl;
+        return true;
+    }
+
 
     if( start < end || start == end )
     {
       UtcDate time1Date( time1 );
       UtcDate time2Date( time2 );
  
+      std::cout << "start <= end" << std::endl;
       return time1Date == time2Date;
     }
     else
     {
       int sessionLength = DateTime::SECONDS_PER_DAY - (start - end);
+      std::cout << "Session length: " << sessionLength << std::endl;
 
       if( time1 > time2 )
       {
         UtcTimeOnly time2TimeOnly = UtcTimeOnly(time2);
 
         long delta = time2TimeOnly - start;
+
+        std::cout << "Delta: "<<delta << std::endl;
         if( delta < 0 )
           delta = DateTime::SECONDS_PER_DAY - labs(delta);
+        std::cout << "Delta after correction: "<<delta << std::endl;
 
+        std::cout << "Time diff: " <<time1 - time2<<" Session diff: " <<sessionLength - delta<< std::endl;
         return (time1 - time2) < (sessionLength - delta);
       }
       else
       {
+        std::cout << "(time2 >= time1) Time diff: " <<time2 - time1<<" Session length: " <<sessionLength<< std::endl;
         return (time2 - time1) < sessionLength;
       }
     }
@@ -162,20 +197,115 @@ namespace FIX
                                  const DateTime& time1,
                                  const DateTime& time2 )
   {
-    if( !isInRange( startTime, endTime, startDay, endDay, time1, time1.getWeekDay() ) )
-    {
-        std::cout << "First isInRange" << std::endl;
-        return false;
-    }
 
-    if( !isInRange( startTime, endTime, startDay, endDay, time2, time2.getWeekDay() ) )
-    {
-        std::cout << "Second isInRange" << std::endl;
+      if(!isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay()))
         return false;
-    }
+      if(!isInRange(startTime, endTime, startDay, endDay, time2, time2.getWeekDay()))
+        return false;
+      return true;
 
-    int absoluteDay1 = time1.getJulianDate() - time1.getWeekDay();
-    int absoluteDay2 = time2.getJulianDate() - time2.getWeekDay();
-    return absoluteDay1 == absoluteDay2;
+  }
+
+  /* bool TimeRange::isInSameRange( const DateTime& startTime, */
+  /*                                const DateTime& endTime, */
+  /*                                int startDay, */
+  /*                                int endDay, */
+  /*                                const DateTime& time1, */
+  /*                                const DateTime& time2 ) */
+  /* { */
+  /*   std::cout<<"StartTime: "; */
+  /*   printDT(startTime); */
+  /*   std::cout<<"EndTime: "; */
+  /*   printDT(endTime); */
+
+  /*   if( !isInRange( startTime, endTime, startDay, endDay, time1, time1.getWeekDay() ) ) */
+  /*   { */
+  /*       std::cout << "First isInRange" << std::endl; */
+  /*       return false; */
+  /*   } */
+
+  /*   if( !isInRange( startTime, endTime, startDay, endDay, time2, time2.getWeekDay() ) ) */
+  /*   { */
+  /*       std::cout << "Second isInRange" << std::endl; */
+  /*       return false; */
+  /*   } */
+
+  /*   std::cout<<"Time1: "; */
+  /*   printDT(time1); */
+  /*   std::cout<<"Time2: "; */
+  /*   printDT(time2); */
+  /*   int absoluteDay1 = time1.getJulianDate() - time1.getWeekDay(); */
+  /*   int absoluteDay2 = time2.getJulianDate() - time2.getWeekDay(); */
+  /*   std::cout<<"Abs day1: "<<absoluteDay1<<std::endl; */
+  /*   std::cout<<"Abs day2: "<<absoluteDay2<<std::endl; */
+  /*   if (absoluteDay1 == absoluteDay2) */
+  /*       return true; */
+  /*   if ((absoluteDay1 + 7) == absoluteDay2) */
+  /*   { */
+  /*       /1* long delta = labs(timer2 - time1); // number of seconds *1/ */
+  /*       if(time1 == time2) */
+  /*           return false; */
+
+  /*       return true; */
+  /*       /1* UtcTimeOnly nextWeekTime1(time1); *1/ */
+
+  /*       /1* if(!isInSameRange(startTime, endTime, nextWeekTime1, UtcTimeOnly(time2))) *1/ */
+  /*       /1* /2* if( !isInRange( startTime, endTime, startDay, endDay, nextWeekTime1, nextWeekTime1.getWeekDay() ) ) *2/ *1/ */
+  /*       /1* { *1/ */
+  /*       /1*     std::cout << "Third failed isInRange" << std::endl; *1/ */
+  /*       /1*     return false; *1/ */
+  /*       /1* } *1/ */
+  /*       /1* if(labs(time1.getJulianDate() - time2.getJulianDate()) <=7) *1/ */
+  /*       /1*     return true; *1/ */
+  /*   } */
+  /*   return false; */
+  /* } */
+
+  bool TimeRange::isInRange( const DateTime& startTime,
+                             const DateTime& endTime,
+                             int startDay,
+                             int endDay,
+                             const DateTime& time,
+                             int day )
+  {
+      UtcTimeOnly timeOnly(time);
+
+      if(startDay <= endDay)
+      {
+          bool dayCheck = startDay <= day && day <= endDay;
+          if( startDay == endDay ) dayCheck = true;
+          if( startTime < endTime)
+          {
+              bool timeCheck = true;
+              if (day == startDay || day == endDay) timeCheck =  startTime <= timeOnly && timeOnly < endTime;
+
+              return dayCheck && timeCheck;
+          }
+          else
+          {
+              bool invTimeCheck = endTime <= timeOnly && timeOnly < startTime;
+              return dayCheck && !invTimeCheck;
+          }
+      }
+      else
+      {
+          /* bool timeCheck = startTime <= timeOnly && timeOnly < endTime; */
+          /* int delta = 1 - startDay; */
+          /* int newStartDay = startDay - delta; */
+          /* int newEndDay = delta + endDay; */
+          /* int newDay = delta + day; */
+
+          /* newEndDay  = newEndDay <= 0 ? newEndDay + 7 : newEndDay; */
+          /* newDay = newDay <= 0 ? newDay + 7 : newDay; */
+
+          int midEndDay = 7;
+          UtcTimeOnly midEndTime(23, 59, 59);
+          int midStartDay = 1;
+          UtcTimeOnly midStartTime(0, 0, 0);
+          bool result = isInRange(startTime, midEndTime, startDay, midEndDay, timeOnly, day) ||
+              isInRange(midStartTime, endTime, midStartDay, endDay, timeOnly, day);
+
+          return result;
+      }
   }
 }
