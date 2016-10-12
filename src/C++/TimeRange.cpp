@@ -190,23 +190,6 @@ namespace FIX
     }
   }
 
-  bool TimeRange::isInSameRange( const DateTime& startTime,
-                                 const DateTime& endTime,
-                                 int startDay,
-                                 int endDay,
-                                 const DateTime& time1,
-                                 const DateTime& time2 )
-  {
-
-      if(!isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay()))
-        return false;
-      if(!isInRange(startTime, endTime, startDay, endDay, time2, time2.getWeekDay()))
-        return false;
-      int absTime1 = time1.getJulianDate() - time1.getWeekDay();
-      int absTime2 = time2.getJulianDate() - time2.getWeekDay();
-      return absTime1 == absTime2;
-
-  }
 
   /* bool TimeRange::isInSameRange( const DateTime& startTime, */
   /*                                const DateTime& endTime, */
@@ -363,5 +346,32 @@ namespace FIX
       {
           return !isInOpenRange(endTime, startTime, endDay, startDay, time, day);
       }
+  }
+
+  bool TimeRange::isInSameRange( const DateTime& startTime,
+                                 const DateTime& endTime,
+                                 int startDay,
+                                 int endDay,
+                                 const DateTime& time1,
+                                 const DateTime& time2 )
+  {
+      if(!isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay()))
+        return false;
+      if(!isInRange(startTime, endTime, startDay, endDay, time2, time2.getWeekDay()))
+        return false;
+      int absTime1 = time1.getJulianDate() - time1.getWeekDay();
+      int absTime2 = time2.getJulianDate() - time2.getWeekDay();
+
+      if(absTime1 == absTime2)
+          return true;
+      if(startDay >= endDay && abs(absTime1 - absTime2) == 7)
+      {
+          DateTime t(time1);
+          if(time2 > time1)
+              t = time2;
+          UtcTimeOnly midStartTime(0, 0, 0);
+          return isInClosedRange(midStartTime, endTime, 1, endDay, t, t.getWeekDay());
+      }
+      return false;
   }
 }

@@ -313,25 +313,50 @@ TEST(isInSameRangeWithDay)
   time2 = UtcTimeStamp(22, 0, 1, 8, 10, 2016);
   CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
 
+  time2 = UtcTimeStamp(0, 0, 0, 9, 10, 2016);
+  // time2 is in range (boundary)
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 0, 1, 9, 10, 2016);
+  // time2 is out of range (in next week)
+  CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+
   endTime = UtcTimeOnly(0, 5, 0);
   time2 = UtcTimeStamp(0, 4, 59, 8, 10, 2016);
   CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
   
   time2 = UtcTimeStamp(0, 4, 59, 9, 10, 2016);
-  CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 5, 0, 9, 10, 2016);
+  // time2 is in range (boundary)
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
 
   time2 = UtcTimeStamp(0, 5, 1, 9, 10, 2016);
+  // time2 is out of range (in next week)
   CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
 
-  // 
+  // week long session startion on Wednesday
   startDay = 4;
   endDay = 4;
   startTime = UtcTimeOnly(0, 10, 0);
   endTime = UtcTimeOnly(0, 0, 0);
 
   time1 = UtcTimeStamp(0, 10, 1, 5, 10, 2016);
-  time2 = UtcTimeStamp(0, 0, 1, 11, 10, 2016);
+  time2 = UtcTimeStamp(0, 0, 1, 12, 10, 2016);
+  //time2 is out of range
   CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time1 = UtcTimeStamp(0, 10, 0, 5, 10, 2016);
+  time2 = UtcTimeStamp(0, 0, 0, 12, 10, 2016);
+  //time1 and time2 are in range (boundary)
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+  time2 = UtcTimeStamp(0, 0, 0, 9, 10, 2016);
+  // time2 is in the middle of session
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
 }
 
 TEST(isTimePointInDayTimeRange)
@@ -506,6 +531,12 @@ TEST(isInSameRangeOurFix)
     CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
     CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
 
+    // time1 and time2 are in range (boundary)
+    time1 = UtcTimeStamp(3, 0, 0, 10, 10, 2016);
+    time2 = UtcTimeStamp(18, 0, 0, 13, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
     time1 = UtcTimeStamp(2, 0, 0, 10, 10, 2016);
     time2 = UtcTimeStamp(15, 0, 0, 10, 10, 2016);
     // time 1 is out of range
@@ -542,16 +573,92 @@ TEST(isInSameRangeOurFix)
     CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
     CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
 
-    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
-    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time2, time2.getWeekDay())  );
-
-    startDay = 2;
-    endDay = 2;
-    startTime = UtcTimeOnly(8, 0, 0);
-    endTime = UtcTimeOnly(16, 0, 0);
     time1 = UtcTimeStamp(8, 0, 1, 10, 10, 2016);
     time2 = UtcTimeStamp(15, 59, 59, 11, 10, 2016);
     // time 2 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // boundary conditions
+    time1 = UtcTimeStamp(8, 0, 0, 10, 10, 2016);
+    time2 = UtcTimeStamp(16, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startTime = UtcTimeOnly(1, 10, 0);
+    endTime = UtcTimeOnly(1, 0, 0);
+    time1 = UtcTimeStamp(1, 10, 1, 10, 10, 2016);
+    time2 = UtcTimeStamp(0, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startDay = 1;
+    endDay = 1;
+    startTime = UtcTimeOnly(1, 10, 0);
+    endTime = UtcTimeOnly(1, 0, 0);
+
+    // boundary conditions
+    time1 = UtcTimeStamp(1, 10, 1, 9, 10, 2016);
+    time2 = UtcTimeStamp(0, 59, 59, 16, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+    
+    time1 = UtcTimeStamp(1, 10, 1, 9, 10, 2016);
+    time2 = UtcTimeStamp(0, 0, 0, 16, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // time2 is out of range
+    time2 = UtcTimeStamp(1, 0, 1, 16, 10, 2016);
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // time2 is out of range (week session)
+    time2 = UtcTimeStamp(1, 0, 1, 16, 10, 2016);
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(1, 0, 1, 13, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startDay = 5;
+    endDay = 2;
+    time1 = UtcTimeStamp(1, 10, 1, 13, 10, 2016);
+    time2 = UtcTimeStamp(0, 59, 59, 17, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(1, 10, 0, 13, 10, 2016);
+    time2 = UtcTimeStamp(1, 0, 0, 17, 10, 2016);
+    // time1 and time2 are in range (boundary)
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(23, 59, 59, 12, 10, 2016);
+    // time1 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(1, 5, 0, 13, 10, 2016);
+    time2 = UtcTimeStamp(1, 0, 0, 17, 10, 2016);
+    // time1 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(1, 10, 0, 13, 10, 2016);
+    time2 = UtcTimeStamp(1, 0, 1, 17, 10, 2016);
+    // time2 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(0, 59, 59, 18, 10, 2016);
+    // time2 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(0, 59, 59, 25, 10, 2016);
+    // time2 is out of range (date is out of range)
     CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
     CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
 }
