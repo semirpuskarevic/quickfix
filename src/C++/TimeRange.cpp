@@ -202,7 +202,9 @@ namespace FIX
         return false;
       if(!isInRange(startTime, endTime, startDay, endDay, time2, time2.getWeekDay()))
         return false;
-      return true;
+      int absTime1 = time1.getJulianDate() - time1.getWeekDay();
+      int absTime2 = time2.getJulianDate() - time2.getWeekDay();
+      return absTime1 == absTime2;
 
   }
 
@@ -261,6 +263,89 @@ namespace FIX
   /*   return false; */
   /* } */
 
+  // start and end times are not included
+  bool isInOpenRange( const DateTime& startTime,
+                             const DateTime& endTime,
+                             int startDay,
+                             int endDay,
+                             const DateTime& time,
+                             int day )
+  {
+      UtcTimeOnly timeOnly(time);
+
+      bool dayCheck = startDay <= day && day <= endDay;
+      if( startDay == endDay ) dayCheck = true;
+      if( startTime < endTime)
+      {
+          if(startDay  == endDay && startDay == -1)
+          {
+              return startTime < timeOnly  && timeOnly < endTime;
+          }
+          else
+          {
+
+              if(startDay == endDay && day != startDay)
+                  return false;
+
+              bool timeCheck = true;
+              timeCheck = day == startDay ? startTime < timeOnly : timeCheck;
+              timeCheck = day == endDay ? timeOnly < endTime : timeCheck;
+              if(startDay == endDay && startDay == day)
+                  timeCheck =  startTime < timeOnly  && timeOnly < endTime;
+              /* if (day == startDay || day == endDay) timeCheck =  startTime < timeOnly  && timeOnly < endTime; */
+
+              return dayCheck && timeCheck;
+          }
+      }
+      else
+      {
+          bool invTimeCheck = false;
+          if (day == startDay || day == endDay) invTimeCheck = endTime <= timeOnly && timeOnly <= startTime;
+          return dayCheck && !invTimeCheck;
+      }
+  }
+
+  bool isInClosedRange( const DateTime& startTime,
+                             const DateTime& endTime,
+                             int startDay,
+                             int endDay,
+                             const DateTime& time,
+                             int day )
+  {
+      UtcTimeOnly timeOnly(time);
+
+      bool dayCheck = startDay <= day && day <= endDay;
+      if( startDay == endDay ) dayCheck = true;
+      if( startTime < endTime)
+      {
+          if(startDay  == endDay && startDay == -1)
+          {
+              return startTime <= timeOnly  && timeOnly <= endTime;
+          }
+          else
+          {
+              if(startDay == endDay && day != startDay)
+                  return false;
+
+              bool timeCheck = true;
+              timeCheck = day == startDay ? startTime <= timeOnly : timeCheck;
+              timeCheck = day == endDay ? timeOnly <=endTime : timeCheck;
+              if(startDay == endDay && startDay == day)
+                  timeCheck =  startTime <= timeOnly  && timeOnly <= endTime;
+
+              /* if (day == startDay || day == endDay) timeCheck =  startTime <= timeOnly  && timeOnly <= endTime; */
+
+              return dayCheck && timeCheck;
+          }
+      }
+      else
+      {
+          bool invTimeCheck = false;
+          if (day == startDay || day == endDay) invTimeCheck = endTime < timeOnly && timeOnly < startTime;
+          return dayCheck && !invTimeCheck;
+      }
+  }
+
   bool TimeRange::isInRange( const DateTime& startTime,
                              const DateTime& endTime,
                              int startDay,
@@ -272,40 +357,11 @@ namespace FIX
 
       if(startDay <= endDay)
       {
-          bool dayCheck = startDay <= day && day <= endDay;
-          if( startDay == endDay ) dayCheck = true;
-          if( startTime < endTime)
-          {
-              bool timeCheck = true;
-              if (day == startDay || day == endDay) timeCheck =  startTime <= timeOnly && timeOnly < endTime;
-
-              return dayCheck && timeCheck;
-          }
-          else
-          {
-              bool invTimeCheck = endTime <= timeOnly && timeOnly < startTime;
-              return dayCheck && !invTimeCheck;
-          }
+          return isInClosedRange(startTime, endTime, startDay, endDay, time, day);
       }
       else
       {
-          /* bool timeCheck = startTime <= timeOnly && timeOnly < endTime; */
-          /* int delta = 1 - startDay; */
-          /* int newStartDay = startDay - delta; */
-          /* int newEndDay = delta + endDay; */
-          /* int newDay = delta + day; */
-
-          /* newEndDay  = newEndDay <= 0 ? newEndDay + 7 : newEndDay; */
-          /* newDay = newDay <= 0 ? newDay + 7 : newDay; */
-
-          int midEndDay = 7;
-          UtcTimeOnly midEndTime(23, 59, 59);
-          int midStartDay = 1;
-          UtcTimeOnly midStartTime(0, 0, 0);
-          bool result = isInRange(startTime, midEndTime, startDay, midEndDay, timeOnly, day) ||
-              isInRange(midStartTime, endTime, midStartDay, endDay, timeOnly, day);
-
-          return result;
+          return !isInOpenRange(endTime, startTime, endDay, startDay, time, day);
       }
   }
 }
