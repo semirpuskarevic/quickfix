@@ -27,36 +27,36 @@
 #include "C++/Utility.h"
 #include "C++/SessionSettings.h"
 #ifndef _MSC_VER
-/* #include <DataDictionaryTestCase.cpp> */
-/* #include <DictionaryTestCase.cpp> */
-/* #include <FieldBaseTestCase.cpp> */
-/* #include <FieldConvertorsTestCase.cpp> */
-/* #include <FileLogTestCase.cpp> */
-/* #include <FileStoreFactoryTestCase.cpp> */
-/* #include <FileStoreTestCase.cpp> */
-/* #include <FileUtilitiesTestCase.cpp> */
-/* #include <HttpMessageTestCase.cpp> */
-/* #include <HttpParserTestCase.cpp> */
-/* #include <MemoryStoreTestCase.cpp> */
-/* #include <MessageSortersTestCase.cpp> */
-/* #include <MessagesTestCase.cpp> */
-/* #include <MySQLStoreTestCase.cpp> */
-/* #include <NullStoreTestCase.cpp> */
-/* #include <OdbcStoreTestCase.cpp> */
-/* #include <ParserTestCase.cpp> */
-/* #include <PostgreSQLStoreTestCase.cpp> */
-/* #include <SessionIDTestCase.cpp> */
-/* #include <SessionSettingsTestCase.cpp> */
-/* #include <SessionTestCase.cpp> */
-/* #include <SessionFactoryTestCase.cpp> */
-/* #include <SettingsTestCase.cpp> */
-/* #include <SocketAcceptorTestCase.cpp> */
-/* #include <SocketConnectorTestCase.cpp> */
-/* #include <SocketServerTestCase.cpp> */
-/* #include <TestHelper.cpp> */
+#include <DataDictionaryTestCase.cpp>
+#include <DictionaryTestCase.cpp>
+#include <FieldBaseTestCase.cpp>
+#include <FieldConvertorsTestCase.cpp>
+#include <FileLogTestCase.cpp>
+#include <FileStoreFactoryTestCase.cpp>
+#include <FileStoreTestCase.cpp>
+#include <FileUtilitiesTestCase.cpp>
+#include <HttpMessageTestCase.cpp>
+#include <HttpParserTestCase.cpp>
+#include <MemoryStoreTestCase.cpp>
+#include <MessageSortersTestCase.cpp>
+#include <MessagesTestCase.cpp>
+#include <MySQLStoreTestCase.cpp>
+#include <NullStoreTestCase.cpp>
+#include <OdbcStoreTestCase.cpp>
+#include <ParserTestCase.cpp>
+#include <PostgreSQLStoreTestCase.cpp>
+#include <SessionIDTestCase.cpp>
+#include <SessionSettingsTestCase.cpp>
+#include <SessionTestCase.cpp>
+#include <SessionFactoryTestCase.cpp>
+#include <SettingsTestCase.cpp>
+#include <SocketAcceptorTestCase.cpp>
+#include <SocketConnectorTestCase.cpp>
+#include <SocketServerTestCase.cpp>
+#include <TestHelper.cpp>
 #include <TimeRangeTestCase.cpp>
-/* #include <UtcTimeOnlyTestCase.cpp> */
-/* #include <UtcTimeStampTestCase.cpp> */
+#include <UtcTimeOnlyTestCase.cpp>
+#include <UtcTimeStampTestCase.cpp>
 #endif
 #include <UnitTest++.h>
 #include <TestReporterStdout.h>
