@@ -73,42 +73,6 @@ namespace FIX
   }
 
 
-  /* bool TimeRange::isInRange( const DateTime& startTime, */
-  /*                            const DateTime& endTime, */
-  /*                            int startDay, */
-  /*                            int endDay, */
-  /*                            const DateTime& time, */
-  /*                            int day ) */
-  /* { */
-  /*   UtcTimeOnly timeOnly (time); */
-
-  /*   if( startDay == endDay ) */
-  /*   { */
-  /*     if( day != startDay ) */
-  /*       return true; */
-  /*     return isInRange( startTime, endTime, time ); */
-  /*   } */
-  /*   else if( startDay < endDay ) */
-  /*   { */
-  /*     if( day < startDay || day > endDay ) */
-  /*       return false; */
-  /*     else if( day == startDay && timeOnly < startTime ) */
-  /*       return false; */
-  /*     else if( day == endDay && timeOnly > endTime ) */
-  /*       return false; */
-  /*   } */
-  /*   else if( startDay > endDay ) */
-  /*   { */
-  /*     if( day < startDay && day > endDay ) */
-  /*       return false; */
-  /*     else if( day == startDay && timeOnly < startTime ) */
-  /*       return false; */
-  /*     else if( day == endDay && timeOnly > endTime ) */
-  /*       return false; */
-  /*   } */
-  /*   return true; */
-  /* } */
-
   bool TimeRange::isInRange( const DateTime& startTime,
                              const DateTime& endTime,
                              int startDay,
@@ -118,173 +82,106 @@ namespace FIX
     return isInRange( startTime, endTime, startDay, endDay, time, time.getWeekDay() );
   }
 
-  void printDT(const DateTime& dt) {
-      std::cout<<dt.getYear()<<' '<<dt.getDay()<<' '<<dt.getMonth()<<' '<<dt.getHour()<<
-          ':'<<dt.getMinute()<<':'<<dt.getSecond()<<'.'<<dt.getMillisecond()<<std::endl;
-  }
-
   bool TimeRange::isInSameRange( const DateTime& start,
                                  const DateTime& end,
                                  const DateTime& time1,
                                  const DateTime& time2 )
   {
-    std::cout<<"4params - StartTime: ";
-    printDT(start);
-    std::cout<<"4params - EndTime: ";
-    printDT(end);
-    std::cout<<"4params - Time1: ";
-    printDT(time1);
-    std::cout<<"4params - Time2: ";
-    printDT(time2);
+    if( !isInRange( start, end, time1 ) ) return false;
+    if( !isInRange( start, end, time2 ) ) return false;
 
-    if( !isInRange( start, end, time1 ) ) 
-    {
-        std::cout << "Time1 not in range" << std::endl;
-        return false;
-    }
-    if( !isInRange( start, end, time2 ) )
-    {
-        std::cout << "Time2 not in range" << std::endl;
-        return false;
-    }
-
-    if( time1 == time2 ) 
-    {
-        std::cout << "Time1 = Time2" << std::endl;
-        return true;
-    }
+    if( time1 == time2 ) return true;
 
 
     if( start < end || start == end )
     {
       UtcDate time1Date( time1 );
       UtcDate time2Date( time2 );
- 
-      std::cout << "start <= end" << std::endl;
+
       return time1Date == time2Date;
     }
     else
     {
       int sessionLength = DateTime::SECONDS_PER_DAY - (start - end);
-      std::cout << "Session length: " << sessionLength << std::endl;
 
       if( time1 > time2 )
       {
         UtcTimeOnly time2TimeOnly = UtcTimeOnly(time2);
 
         long delta = time2TimeOnly - start;
-
-        std::cout << "Delta: "<<delta << std::endl;
         if( delta < 0 )
           delta = DateTime::SECONDS_PER_DAY - labs(delta);
-        std::cout << "Delta after correction: "<<delta << std::endl;
 
-        std::cout << "Time diff: " <<time1 - time2<<" Session diff: " <<sessionLength - delta<< std::endl;
         return (time1 - time2) < (sessionLength - delta);
       }
       else
       {
-        std::cout << "(time2 >= time1) Time diff: " <<time2 - time1<<" Session length: " <<sessionLength<< std::endl;
         return (time2 - time1) < sessionLength;
       }
     }
   }
 
+  bool isDayInClosedRange(int startDay, int endDay, int day)
+  {
+      bool dayCheck = startDay <= day && day <= endDay;
+      return startDay == endDay ? true : dayCheck;
+  }
 
-  /* bool TimeRange::isInSameRange( const DateTime& startTime, */
-  /*                                const DateTime& endTime, */
-  /*                                int startDay, */
-  /*                                int endDay, */
-  /*                                const DateTime& time1, */
-  /*                                const DateTime& time2 ) */
-  /* { */
-  /*   std::cout<<"StartTime: "; */
-  /*   printDT(startTime); */
-  /*   std::cout<<"EndTime: "; */
-  /*   printDT(endTime); */
+  bool isTimeInOpenIntradaySession( const DateTime& startTime,
+                                const DateTime& endTime,
+                                int startDay,
+                                int endDay,
+                                const UtcTimeOnly& timeOnly,
+                                int day )
+  {
+      if(startDay == -1)
+          return startTime < timeOnly && timeOnly < endTime;
+      if(day != startDay)
+          return false;
+      else
+          return startTime < timeOnly  && timeOnly < endTime;
+  }
 
-  /*   if( !isInRange( startTime, endTime, startDay, endDay, time1, time1.getWeekDay() ) ) */
-  /*   { */
-  /*       std::cout << "First isInRange" << std::endl; */
-  /*       return false; */
-  /*   } */
-
-  /*   if( !isInRange( startTime, endTime, startDay, endDay, time2, time2.getWeekDay() ) ) */
-  /*   { */
-  /*       std::cout << "Second isInRange" << std::endl; */
-  /*       return false; */
-  /*   } */
-
-  /*   std::cout<<"Time1: "; */
-  /*   printDT(time1); */
-  /*   std::cout<<"Time2: "; */
-  /*   printDT(time2); */
-  /*   int absoluteDay1 = time1.getJulianDate() - time1.getWeekDay(); */
-  /*   int absoluteDay2 = time2.getJulianDate() - time2.getWeekDay(); */
-  /*   std::cout<<"Abs day1: "<<absoluteDay1<<std::endl; */
-  /*   std::cout<<"Abs day2: "<<absoluteDay2<<std::endl; */
-  /*   if (absoluteDay1 == absoluteDay2) */
-  /*       return true; */
-  /*   if ((absoluteDay1 + 7) == absoluteDay2) */
-  /*   { */
-  /*       /1* long delta = labs(timer2 - time1); // number of seconds *1/ */
-  /*       if(time1 == time2) */
-  /*           return false; */
-
-  /*       return true; */
-  /*       /1* UtcTimeOnly nextWeekTime1(time1); *1/ */
-
-  /*       /1* if(!isInSameRange(startTime, endTime, nextWeekTime1, UtcTimeOnly(time2))) *1/ */
-  /*       /1* /2* if( !isInRange( startTime, endTime, startDay, endDay, nextWeekTime1, nextWeekTime1.getWeekDay() ) ) *2/ *1/ */
-  /*       /1* { *1/ */
-  /*       /1*     std::cout << "Third failed isInRange" << std::endl; *1/ */
-  /*       /1*     return false; *1/ */
-  /*       /1* } *1/ */
-  /*       /1* if(labs(time1.getJulianDate() - time2.getJulianDate()) <=7) *1/ */
-  /*       /1*     return true; *1/ */
-  /*   } */
-  /*   return false; */
-  /* } */
-
+  bool isTimeInClosedIntradaySession( const DateTime& startTime,
+                                const DateTime& endTime,
+                                int startDay,
+                                int endDay,
+                                const UtcTimeOnly& timeOnly,
+                                int day )
+  {
+      if(startDay == -1)
+          return startTime <= timeOnly && timeOnly <= endTime;
+      if(day != startDay)
+          return false;
+      else
+          return startTime <= timeOnly  && timeOnly <= endTime;
+  }
   // start and end times are not included
   bool isInOpenRange( const DateTime& startTime,
                              const DateTime& endTime,
                              int startDay,
                              int endDay,
-                             const DateTime& time,
+                             const UtcTimeOnly& timeOnly,
                              int day )
   {
-      UtcTimeOnly timeOnly(time);
-
-      bool dayCheck = startDay <= day && day <= endDay;
-      if( startDay == endDay ) dayCheck = true;
       if( startTime < endTime)
       {
-          if(startDay  == endDay && startDay == -1)
-          {
-              return startTime < timeOnly  && timeOnly < endTime;
-          }
+          if(startDay == endDay)
+              return isTimeInOpenIntradaySession(startTime, endTime, startDay, endDay, timeOnly, day);
           else
           {
-
-              if(startDay == endDay && day != startDay)
-                  return false;
-
               bool timeCheck = true;
               timeCheck = day == startDay ? startTime < timeOnly : timeCheck;
               timeCheck = day == endDay ? timeOnly < endTime : timeCheck;
-              if(startDay == endDay && startDay == day)
-                  timeCheck =  startTime < timeOnly  && timeOnly < endTime;
-              /* if (day == startDay || day == endDay) timeCheck =  startTime < timeOnly  && timeOnly < endTime; */
-
-              return dayCheck && timeCheck;
+              return isDayInClosedRange(startDay, endDay, day) && timeCheck;
           }
       }
       else
       {
+          // not intraday session
           bool invTimeCheck = false;
           if (day == startDay || day == endDay) invTimeCheck = endTime <= timeOnly && timeOnly <= startTime;
-          return dayCheck && !invTimeCheck;
+          return isDayInClosedRange(startDay, endDay, day) && !invTimeCheck;
       }
   }
 
@@ -292,40 +189,27 @@ namespace FIX
                              const DateTime& endTime,
                              int startDay,
                              int endDay,
-                             const DateTime& time,
+                             const UtcTimeOnly& timeOnly,
                              int day )
   {
-      UtcTimeOnly timeOnly(time);
-
-      bool dayCheck = startDay <= day && day <= endDay;
-      if( startDay == endDay ) dayCheck = true;
       if( startTime < endTime)
       {
-          if(startDay  == endDay && startDay == -1)
-          {
-              return startTime <= timeOnly  && timeOnly <= endTime;
-          }
+          if(startDay == endDay)
+              return isTimeInClosedIntradaySession(startTime, endTime, startDay, endDay, timeOnly, day);
           else
           {
-              if(startDay == endDay && day != startDay)
-                  return false;
-
               bool timeCheck = true;
               timeCheck = day == startDay ? startTime <= timeOnly : timeCheck;
-              timeCheck = day == endDay ? timeOnly <=endTime : timeCheck;
-              if(startDay == endDay && startDay == day)
-                  timeCheck =  startTime <= timeOnly  && timeOnly <= endTime;
-
-              /* if (day == startDay || day == endDay) timeCheck =  startTime <= timeOnly  && timeOnly <= endTime; */
-
-              return dayCheck && timeCheck;
+              timeCheck = day == endDay ? timeOnly <= endTime : timeCheck;
+              return isDayInClosedRange(startDay, endDay, day) && timeCheck;
           }
       }
       else
       {
+          // not intraday session
           bool invTimeCheck = false;
           if (day == startDay || day == endDay) invTimeCheck = endTime < timeOnly && timeOnly < startTime;
-          return dayCheck && !invTimeCheck;
+          return isDayInClosedRange(startDay, endDay, day) && !invTimeCheck;
       }
   }
 
@@ -339,13 +223,35 @@ namespace FIX
       UtcTimeOnly timeOnly(time);
 
       if(startDay <= endDay)
-      {
           return isInClosedRange(startTime, endTime, startDay, endDay, time, day);
-      }
       else
-      {
           return !isInOpenRange(endTime, startTime, endDay, startDay, time, day);
+  }
+
+
+  bool areInSameSession( const DateTime& endTime,
+                         int startDay,
+                         int endDay,
+                         const DateTime& time1,
+                         const DateTime& time2 )
+  {
+      int absTime1 = time1.getJulianDate() - time1.getWeekDay();
+      int absTime2 = time2.getJulianDate() - time2.getWeekDay();
+
+      // same week
+      if(absTime1 == absTime2)
+          return true;
+
+      // week crossing on Sunday
+      if(startDay >= endDay && abs(absTime1 - absTime2) == 7)
+      {
+          DateTime largerTime(time1);
+          if(time2 > time1)
+              largerTime = time2;
+          UtcTimeOnly midStartTime(0, 0, 0);
+          return isInClosedRange(midStartTime, endTime, 1, endDay, largerTime, largerTime.getWeekDay());
       }
+      return false;
   }
 
   bool TimeRange::isInSameRange( const DateTime& startTime,
@@ -359,19 +265,6 @@ namespace FIX
         return false;
       if(!isInRange(startTime, endTime, startDay, endDay, time2, time2.getWeekDay()))
         return false;
-      int absTime1 = time1.getJulianDate() - time1.getWeekDay();
-      int absTime2 = time2.getJulianDate() - time2.getWeekDay();
-
-      if(absTime1 == absTime2)
-          return true;
-      if(startDay >= endDay && abs(absTime1 - absTime2) == 7)
-      {
-          DateTime t(time1);
-          if(time2 > time1)
-              t = time2;
-          UtcTimeOnly midStartTime(0, 0, 0);
-          return isInClosedRange(midStartTime, endTime, 1, endDay, t, t.getWeekDay());
-      }
-      return false;
+      return areInSameSession(endTime, startDay, endDay, time1, time2);
   }
 }
