@@ -197,6 +197,12 @@ TEST(isInSameRange)
   time2 = UtcTimeStamp( 19, 06, 0, 1, 14, 2004 );
   CHECK( !TimeRange::isInSameRange( start, end, time1, time2 ) );
   CHECK( !TimeRange::isInSameRange( start, end, time2, time1 ) );
+
+  start= UtcTimeOnly(0, 10, 0);
+  end= UtcTimeOnly(0, 5, 0);
+  time1 = UtcTimeStamp(0, 10, 1, 2, 10, 2016);
+  time2 = UtcTimeStamp(0, 4, 59, 3, 10, 2016);
+  CHECK( TimeRange::isInSameRange( start, end, time1, time2 ) );
 }
 
 TEST(isInSameRangeWithDay)
@@ -287,12 +293,373 @@ TEST(isInSameRangeWithDay)
   time2 = UtcTimeStamp(9, 1, 0, 4, 12, 2006);
   CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
 
-  time1 = UtcTimeStamp(8, 58, 59, 10, 12, 2006);
-  time2 = UtcTimeStamp(9, 1, 0, 3, 12, 2006);
-  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
-
-  time1 = UtcTimeStamp(8, 59, 1, 10, 12, 2006);
+  time2 = UtcTimeStamp(9, 5, 0, 10, 12, 2006);
   CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2) );
+
+  // Tests crossing Wednesday to Thursday
+  startTime = UtcTimeOnly(0, 10, 0);
+  endTime = UtcTimeOnly(0, 0, 0);
+  time1 = UtcTimeStamp(0, 10, 1, 2, 10, 2016);
+
+  time2 = UtcTimeStamp(0, 0, 1, 5, 10, 2016);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 0, 1, 6, 10, 2016);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 0, 1, 7, 10, 2016);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(22, 0, 1, 8, 10, 2016);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 0, 0, 9, 10, 2016);
+  // time2 is in range (boundary)
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 0, 1, 9, 10, 2016);
+  // time2 is out of range (in next week)
+  CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+
+  endTime = UtcTimeOnly(0, 5, 0);
+  time2 = UtcTimeStamp(0, 4, 59, 8, 10, 2016);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+  
+  time2 = UtcTimeStamp(0, 4, 59, 9, 10, 2016);
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 5, 0, 9, 10, 2016);
+  // time2 is in range (boundary)
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time2 = UtcTimeStamp(0, 5, 1, 9, 10, 2016);
+  // time2 is out of range (in next week)
+  CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  // week long session startion on Wednesday
+  startDay = 4;
+  endDay = 4;
+  startTime = UtcTimeOnly(0, 10, 0);
+  endTime = UtcTimeOnly(0, 0, 0);
+
+  time1 = UtcTimeStamp(0, 10, 1, 5, 10, 2016);
+  time2 = UtcTimeStamp(0, 0, 1, 12, 10, 2016);
+  //time2 is out of range
+  CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+
+  time1 = UtcTimeStamp(0, 10, 0, 5, 10, 2016);
+  time2 = UtcTimeStamp(0, 0, 0, 12, 10, 2016);
+  //time1 and time2 are in range (boundary)
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+  time2 = UtcTimeStamp(0, 0, 0, 9, 10, 2016);
+  // time2 is in the middle of session
+  CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
 }
 
+TEST(isTimePointInDayTimeRange)
+{
+    // NOTE:
+    // time1 == startTime is always in range
+    // time1 == endTime is always in range
+    int startDay = 2;
+    int endDay = 5;
+
+    UtcTimeOnly startTime( 3, 0, 0 );
+    UtcTimeOnly endTime( 18, 0, 0 );
+    UtcTimeStamp time1 = UtcTimeStamp(2, 0, 0, 10, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(3, 0, 1, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    // time1 == startTime (boundary in range)
+    time1 = UtcTimeStamp(3, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp( 2, 0, 0, 13, 10, 2016 );
+    CHECK(TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay()));
+
+    // time1 == endTime (boundary in range)
+    time1 = UtcTimeStamp(18, 0, 0, 13, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(19, 0, 0, 13, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp( 2, 0, 0, 12, 10, 2016 );
+    CHECK(TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay()));
+
+    // same day
+    startDay = 2;
+    endDay = 2;
+
+    //startTime < endTime
+    time1 = UtcTimeStamp(2, 0, 0, 10, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(19, 0, 0, 10, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(15, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(15, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    startTime = UtcTimeOnly(8, 0, 0);
+    endTime = UtcTimeOnly(16, 0, 0);
+    time1 = UtcTimeStamp(15, 59, 59, 11, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    //startTime > endTime (week long session)
+    startTime = UtcTimeOnly( 18, 0, 0 );
+    endTime = UtcTimeOnly( 3, 0, 0 );
+
+    // time1 == endTime (boundary in range)
+    time1 = UtcTimeStamp(3, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(3, 0, 1, 10, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    
+    // time1 == startTime (boundary in range)
+    time1 = UtcTimeStamp(18, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(19, 0, 1, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(2, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(2, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    
+    // time1 == endTime (boundary in range)
+    time1 = UtcTimeStamp(3, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(3, 0, 1, 17, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    //startDay < endDay (week-crossing)
+    startDay = 5;
+    endDay = 2;
+    
+    startTime = UtcTimeOnly( 3, 0, 0 );
+    endTime = UtcTimeOnly( 18, 0, 0 );
+
+    time1 = UtcTimeStamp(2, 59, 59, 13, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(18, 0, 1, 17, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    time1 = UtcTimeStamp(3, 0, 1, 13, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    
+    time1 = UtcTimeStamp(3, 0, 1, 20, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    // time in range, but day out of range
+    time1 = UtcTimeStamp(3, 0, 1, 12, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    // time in range, but day out of range
+    time1 = UtcTimeStamp(3, 0, 1, 18, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    
+    // time1 == startTime (boundary in range)
+    time1 = UtcTimeStamp(3, 0, 0, 13, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    
+    // time1 == endTime (boundary in range)
+    time1 = UtcTimeStamp(18, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+
+    startDay = 1;
+    endDay = 1;
+    startTime = UtcTimeOnly( 0, 10, 0 );
+    endTime = UtcTimeOnly( 0, 0, 0 );
+    time1 = UtcTimeStamp(5, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(0, 5, 0, 16, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    startDay = 7;
+    endDay = 7;
+    startTime = UtcTimeOnly( 0, 10, 0 );
+    endTime = UtcTimeOnly( 0, 0, 0 );
+    time1 = UtcTimeStamp(5, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(0, 5, 0, 15, 10, 2016);
+    CHECK( !TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+    time1 = UtcTimeStamp(23, 59, 59, 14, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    // time1 == endTime (boundary in range)
+    time1 = UtcTimeStamp(0, 0, 0, 15, 10, 2016);
+    CHECK( TimeRange::isInRange(startTime, endTime, startDay, endDay, time1, time1.getWeekDay())  );
+
+    startTime = UtcTimeOnly( 3, 0, 0 );
+    endTime = UtcTimeOnly( 18, 0, 0 );
+    startDay = 2;
+    endDay = 5;
+
+    UtcTimeStamp now( 2, 0, 0, 28, 7, 2004 );
+    CHECK(TimeRange::isInRange(startTime, endTime, startDay, endDay, now, now.getWeekDay()));
+
+    startDay = 5;
+    endDay = 2;
+
+    now = UtcTimeStamp( 2, 0, 0, 8, 10, 2016 );
+    CHECK(TimeRange::isInRange(startTime, endTime, startDay, endDay, now, now.getWeekDay()));
+
+    now = UtcTimeStamp( 2, 0, 0, 7, 10, 2016 );
+    CHECK(TimeRange::isInRange(startTime, endTime, startDay, endDay, now, now.getWeekDay()));
+}
+
+
+TEST(isInSameRangeOurFix)
+{
+    // startDay < endDay
+    int startDay = 2;
+    int endDay = 5;
+
+    UtcTimeOnly startTime( 3, 0, 0 );
+    UtcTimeOnly endTime( 18, 0, 0 );
+    UtcTimeStamp time1 = UtcTimeStamp(3, 0, 1, 10, 10, 2016);
+    UtcTimeStamp time2 = UtcTimeStamp(17, 59, 59, 13, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // time1 and time2 are in range (boundary)
+    time1 = UtcTimeStamp(3, 0, 0, 10, 10, 2016);
+    time2 = UtcTimeStamp(18, 0, 0, 13, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(2, 0, 0, 10, 10, 2016);
+    time2 = UtcTimeStamp(15, 0, 0, 10, 10, 2016);
+    // time 1 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startDay = 1;
+    endDay = 7;
+    startTime = UtcTimeOnly( 3, 0, 0 );
+    endTime = UtcTimeOnly( 2, 50, 0 );
+    time1 = UtcTimeStamp(3, 0, 1, 9, 10, 2016);
+    time2 = UtcTimeStamp(2, 49, 59, 15, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // startDay == endDay - intraday session
+    startDay = 2;
+    endDay = 2;
+    startTime = UtcTimeOnly(8, 0, 0);
+    endTime = UtcTimeOnly(16, 0, 0);
+    time1 = UtcTimeStamp(8, 0, 1, 10, 10, 2016);
+    time2 = UtcTimeStamp(15, 59, 59, 10, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(18, 0, 0, 10, 10, 2016);
+    // time 2 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(7, 0, 1, 10, 10, 2016);
+    time2 = UtcTimeStamp(15, 59, 59, 10, 10, 2016);
+    // time 1 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(8, 0, 1, 10, 10, 2016);
+    time2 = UtcTimeStamp(15, 59, 59, 11, 10, 2016);
+    // time 2 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // boundary conditions
+    time1 = UtcTimeStamp(8, 0, 0, 10, 10, 2016);
+    time2 = UtcTimeStamp(16, 0, 0, 10, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startTime = UtcTimeOnly(1, 10, 0);
+    endTime = UtcTimeOnly(1, 0, 0);
+    time1 = UtcTimeStamp(1, 10, 1, 10, 10, 2016);
+    time2 = UtcTimeStamp(0, 0, 0, 17, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startDay = 1;
+    endDay = 1;
+    startTime = UtcTimeOnly(1, 10, 0);
+    endTime = UtcTimeOnly(1, 0, 0);
+
+    // boundary conditions
+    time1 = UtcTimeStamp(1, 10, 1, 9, 10, 2016);
+    time2 = UtcTimeStamp(0, 59, 59, 16, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+    
+    time1 = UtcTimeStamp(1, 10, 1, 9, 10, 2016);
+    time2 = UtcTimeStamp(0, 0, 0, 16, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // time2 is out of range
+    time2 = UtcTimeStamp(1, 0, 1, 16, 10, 2016);
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    // time2 is out of range (week session)
+    time2 = UtcTimeStamp(1, 0, 1, 16, 10, 2016);
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(1, 0, 1, 13, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    startDay = 5;
+    endDay = 2;
+    time1 = UtcTimeStamp(1, 10, 1, 13, 10, 2016);
+    time2 = UtcTimeStamp(0, 59, 59, 17, 10, 2016);
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(1, 10, 0, 13, 10, 2016);
+    time2 = UtcTimeStamp(1, 0, 0, 17, 10, 2016);
+    // time1 and time2 are in range (boundary)
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(23, 59, 59, 12, 10, 2016);
+    // time1 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(1, 5, 0, 13, 10, 2016);
+    time2 = UtcTimeStamp(1, 0, 0, 17, 10, 2016);
+    // time1 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time1 = UtcTimeStamp(1, 10, 0, 13, 10, 2016);
+    time2 = UtcTimeStamp(1, 0, 1, 17, 10, 2016);
+    // time2 is out of range
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(0, 59, 59, 18, 10, 2016);
+    // time2 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+
+    time2 = UtcTimeStamp(0, 59, 59, 25, 10, 2016);
+    // time2 is out of range (date is out of range)
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time1, time2)  );
+    CHECK( !TimeRange::isInSameRange(startTime, endTime, startDay, endDay, time2, time1)  );
+}
 }
